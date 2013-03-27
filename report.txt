@@ -1,0 +1,156 @@
+Benjamin Laws
+CSE 21211-04
+Dec. 5, 2012
+Final Project Report
+
+
+My final project is a program titled "Stars" which plays a retro-style, 
+movement-based game. When the program is first opened, the title is 
+displayed to the screen in a random, slowly changing color. After the 
+user presses any key, the game's directions and controls are shown on 
+the screen until another key is pressed. Then the game begins, with the 
+player-controlled object, a spinning, outlined yellow star, at the 
+center of the screen. This star moves up, left, down, and/or right when 
+the user presses the W, A, S, and/or D keys (respectively). The star's 
+movement begins rapidly but quickly slows and stops unless the user 
+continues to press keys. In addition to the player's star, there is a 
+smaller blue star located at a random location on the screen when the 
+game begins. If the player's star touches this blue star, the player's 
+score increases by 5000, the blue star disappears, and the player star 
+begins to rotate more quickly. At random times, or if at any time there 
+is no blue star onscreen, an additional blue star is added at a new 
+random location. At random times, additional stars, either red or 
+orange, will appear at the edges of the screen and begin to move toward 
+the player's star. The red stars move slowly but steadily, and the 
+orange stars move much more quickly but randomly start and stop. The 
+player's score increases more rapidly with time the more enemy stars are 
+onscreen. If any of these stars touch the player's star, the game ends 
+with all the stars frozen in place and the program displays a list of 
+highscores from an external file. If the player's score was more than 
+the lowest highscore, or if there are less than ten scores in the file, 
+the program asks for the user to type in a name, and it records this 
+name with the player's score in the appropriate place in the highscore 
+list. It then gives the user the option to restart the game or to quit, 
+by pressing either 'r' or 'q'.
+
+
+The program's code is split up into three files: main.c, text.c, and 
+scores.c. Main.c contains the code pertaining to the flow of gameplay 
+and the tracking and display of the various types of stars. Text.c 
+contains the functions used to draw letters and strings to the graphical 
+window. Scores.c contains the functions called at the end of the game to 
+load, compare, display, and write the highscores. In addition, the 
+header file scores.h contains the structure definitions for the two 
+types of structs used, namely star and highscore. The program begins 
+with the main function, which opens a gfx window, initializes the random 
+number generator, and then calls the function show_title. Show_title 
+picks a random bright color (rgb-values all between 100 and 255) and 
+sets gfx_color to this color, then calls the function typewriter to 
+print the word "STARS" to the window. Typewriter works by taking each 
+character in a given string, converting it to lowercase, and then 
+comparing it to each possible letter to determine which drawing function 
+to call. After each letter has been drawn with the given height, it 
+returns. Show_title then picks a new, slightly different color by 
+randomly choosing which rgb components of the old color to increment. If 
+the user has given any input, the while loop is exited. Otherwise, the 
+program clears the screen and writes out the title in the new color, 
+continuing until input is given. After the loop is exited, the program 
+calls typewriter again to display the instructions for the game. It then 
+uses gfx_wait to keep them on the screen until the user presses a key. 
+
+Then show_title returns to main, which calls the next function, play. 
+Play first declares many variables, to keep track of the various stars, 
+the score, the number of each type of star, and the time step in between 
+iterations. The player's star is initialized to begin in the center of 
+the screen with a rate of rotation of 3. The arrays of the other color 
+stars are initially empty. The first action done by play is to call 
+addBlueStar, a function that sets the values of the first empty spot in 
+the array of blue stars with appropriate randomly generated values. Then 
+the program's main loop is entered. In each iteration of the loop, the 
+program clears the screen and then calls the function disp_score, which 
+converts the score from an integer to a string and calls typewriter to 
+display it. Then moveStars is called. MoveStars adds the current 
+velocity of the player's star to its position, making sure that the 
+position is never outside the boundaries of the screen, then rotates the 
+star, and then slightly decreases its velocity so that it will 
+eventually stop without input. Then it rotates each blue star, and 
+rotates and moves each red star closer to the player star according to 
+each one's spin velocity. Then it moves the orange stars. The orange 
+stars move more like the player's star: when they are stationary, they 
+are randomly given a burst of speed toward the player star's current 
+position. They then continue in this direction, slowing down with each 
+iteration, until their velocity is again zero. After this, moveStars 
+returns to play, which calls drawStars. DrawStars loops through each 
+star in each array and calls either drawFullStar (for yellow, red, and 
+orange stars) or drawStickStar (for blue stars) with that star's 
+position, size, and current rotation. DrawStars also randomly draws blue 
+stars as white instead, making them appear to twinkle. Then play calls 
+gfx_flush to force all the drawing to the screen. Then it calls 
+checkCollisions, which compares the player star's position to the 
+position of each other star. If a blue star is touching the player star, 
+a for loop is used to remove that star and simultaneously move every 
+star below it in the array up one space. Then the score variable is 
+increased by 5000 and the player star's spin velocity is incremented 
+(unless it is already at 30). If a red or orange star is touching the 
+player star, checkCollisions returns 1 to play, which calls the function 
+highscores and then exits the loop. Otherwise, play next calls 
+checkControls, which, if the user has pressed 'w', 'a', 's', or 'd', 
+changes the appropriate velocity of the player's star, or returns 1 or 2 
+if 'p' or 'q' was pressed. If checkControls returned 1, play waits for 
+one second and then calls the function highscores, then returns to main. 
+If checkControls returned 2, the function pause_game is called, which 
+writes to the screen and then waits for the user to press 'p'; then, the 
+screen is redrawn and the loop continues. After this, the program 
+delays, then (assuming the score has not reached 999999999) increments 
+the score by one plus the number of enemies currently onscreen, divided 
+by ten. Then, for each type of star, if there are currently less than 
+ten of them, it uses random numbers to decide whether to add any more; 
+if it does, it calls addBlueStar, addRedStar, and/or addOrangeStar, and 
+increments the appropriate counter variable(s). Then the while loop 
+iterates, continuing until the user presses 'q' or the player star 
+touches a red or an orange star.
+
+At this point, the function highscores is called. Highscores first 
+attempts to open the file stars_scores.txt. If it does not exist, it 
+calls get_name, then save_highscores, then disp_highscores. If it does 
+exist, highscores uses a loop with fgets and sscanf to take the contents 
+of the file, which should be integers followed by strings of ten or less 
+characters, and put them into an array of highscore structs. Then the 
+file is closed, and a loop is used to determine whether the player's 
+current score is higher than any of the scores in the array. If it is, 
+the function calls get_name, save_highscores, and disp_highscores. 
+Get_name first uses a loop to get the keypresses of the user, displaying 
+them to the screen with typewriter as they are entered. With each 
+keypress, the screen is cleared and redrawn so that the underscores of 
+formerly blank spaces can be erased. Unfortunately, the backspace 
+character does not register with gfx_wait, so the user cannot delete any 
+accidental input. Once the user presses return or the number of 
+characters entered equals ten, the loop is exited and the correct place 
+for the user's score in the highscore list is calculated by comparing it 
+to each score in the list beginning with the last. Then the appropriate 
+elements in the array are shifted down by one, removing the last one if 
+there are already ten, and the user's score is placed in the open slot. 
+Then the function returns the number of the slot into which the user's 
+data was placed. Save_highscores simply opens the file stars_scores for 
+writing (regardless of whether or not it already exists), and then 
+prints one line to the file for each element in the array of highscores, 
+using the format "score name\n". Then the file is closed and the 
+function returns. Disp_highscores first prints out the options to 
+restart and quit, and the title "HIGHSCORES:". Then, for each element in 
+the array of highscores, it uses typewriter to print out the score and 
+the name, incrementing the y-position each time. Also, if the number of 
+the score matches the number where the player's score was placed, the 
+text is displayed in white to highlight the user's score. After these 
+three functions finish, highscores returns to play, which itself returns 
+to main. Main then enters a loop, in which it waits for user input. If 
+the user presses 'q', main returns and the program terminates. If the 
+user presses 'r', play is called again, and the game restarts.
+
+
+The program's output was verified by running the program multiple times 
+and playing through the game, making sure that all phases of gameplay 
+functioned and connected to each other correctly, that all items 
+displayed to the screen were drawn, that each type of star behaved as 
+expected, that all input at each stage was handled properly, that the 
+highscores and names were loaded, sorted, and saved correctly, and that 
+the program could be looped through indefinitely without problems.
