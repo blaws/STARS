@@ -1,4 +1,4 @@
-// Benjamin Laws, CSE 21221-04
+// Blaws, CSE 21221-04
 // Lab 10: Final Project
 
 struct highscore{
