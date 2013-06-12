@@ -1,4 +1,4 @@
-// Benjamin Laws, CSE 21211-04
+// Blaws, CSE 21211-04
 // Lab 10: Final Project
 
 #include <math.h>
